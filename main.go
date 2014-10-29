@@ -59,7 +59,7 @@ func GetHandler(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var items []*Item
+	items := []*Item{}
 
 	for cur.Next() {
 		item := &Item{}
