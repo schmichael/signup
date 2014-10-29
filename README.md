@@ -1,8 +1,7 @@
-signup
-======
+## signup
 
 
-``GET /api/list/``
+#### ``GET /api/list/``
 
 Returns:
 
@@ -15,7 +14,7 @@ Returns:
 }
 ```
 
-POST /api/list/
+#### ``POST /api/list/``
 
 ```json
 {
@@ -31,7 +30,7 @@ Returns:
 }
 ```
 
-``POST /api/list/<id>``
+#### ``POST /api/list/<id>``
 
 ```json
 {
