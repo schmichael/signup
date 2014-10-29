@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script data-main="app" src="app/libs/require.js"></script>
+</head>
+<body>
+
+	<h1>Sign up</h1>
+
+	<hr>
+
+	<h2>Items</h2>
+	<table border="1" width="100%">
+		<thead>
+			<tr>
+				<th>Description</th>
+				<th>User</th>
+			</tr>
+		</thead>
+		<tbody data-bind="foreach: list">
+			<tr>
+				<td data-bind="text: description() || 'Empty'"></td>
+				<!-- ko if: user() -->
+				<td data-bind="text: user"></td>
+				<!-- /ko -->
+				<!-- ko ifnot: user() -->
+				<td>
+					<form>
+						<fieldset>
+							<label for="description">User</label>
+							<input id="description" type="text" data-bind="textInput: newUser">
+						</fieldset>
+						<button data-bind="click: $root.submitUpdate">Submit</button>
+					</form>
+				</td>
+				<!-- /ko -->
+			</tr>
+		</tbody>
+	</table>
+
+	<hr>
+
+	<form data-bind="with: newItem, submit: submitNewItem">
+		<h2>New Item</h2>
+		<fieldset>
+			<label for="description">Description</label>
+			<input id="description" type="text" data-bind="textInput: description">
+		</fieldset>
+		<button type="submit">Submit</button>
+	</form>
+
+</body>
+</html>
