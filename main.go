@@ -28,6 +28,16 @@ type Item struct {
 	User        string `json:"user,omitempty"`
 }
 
+type Error struct {
+	Error string `json:"error"`
+}
+
+func errorResponse(rw http.ResponseWriter, msg string, code int) {
+	rw.WriteHeader(code)
+	json.NewEncoder(rw).Encode(&Error{Error: msg})
+	return
+}
+
 func addHeaders(rw http.ResponseWriter) {
 	rw.Header().Add("Access-Control-Allow-Origin", "http://localhost:8080")
 	rw.Header().Add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
@@ -45,8 +55,7 @@ func GetHandler(rw http.ResponseWriter, req *http.Request) {
 	tx, err := DB.Begin()
 	if err != nil {
 		log.Printf("Error begining transaction: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		return
 	}
 	defer tx.Rollback()
@@ -54,8 +63,7 @@ func GetHandler(rw http.ResponseWriter, req *http.Request) {
 	cur, err := tx.Query("SELECT * FROM items")
 	if err != nil {
 		log.Printf("Error retrieving list: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		return
 	}
 
@@ -65,8 +73,7 @@ func GetHandler(rw http.ResponseWriter, req *http.Request) {
 		item := &Item{}
 		if err := cur.Scan(&item.ID, &item.Description, &item.User); err != nil {
 			log.Printf("Error retrieving item: %v", err)
-			rw.WriteHeader(500)
-			rw.Write([]byte("oops"))
+			errorResponse(rw, "internal error", 500)
 			return
 		}
 		items = append(items, item)
@@ -78,8 +85,7 @@ func GetHandler(rw http.ResponseWriter, req *http.Request) {
 	body, err := json.Marshal(resp)
 	if err != nil {
 		log.Printf("Error marshalling items: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		return
 	}
 	rw.WriteHeader(200)
@@ -95,16 +101,14 @@ func AddHandler(rw http.ResponseWriter, req *http.Request) {
 	tx, err := DB.Begin()
 	if err != nil {
 		log.Printf("Error begining transaction: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		return
 	}
 
 	item := &Item{}
 	if err := json.NewDecoder(req.Body).Decode(item); err != nil {
 		log.Printf("Error decoding request: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		tx.Rollback()
 		return
 	}
@@ -116,16 +120,14 @@ func AddHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 	if err != nil {
 		log.Printf("Error inserting item: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		tx.Rollback()
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Printf("Error committing item: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		tx.Rollback()
 		return
 	}
@@ -145,16 +147,14 @@ func UpdateHandler(rw http.ResponseWriter, req *http.Request) {
 	tx, err := DB.Begin()
 	if err != nil {
 		log.Printf("Error begining transaction: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		return
 	}
 
 	newitem := &Item{}
 	if err := json.NewDecoder(req.Body).Decode(newitem); err != nil {
 		log.Printf("Error decoding request: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "invalid json in request", 400)
 		tx.Rollback()
 		return
 	}
@@ -162,8 +162,7 @@ func UpdateHandler(rw http.ResponseWriter, req *http.Request) {
 	newitem.ID = vars["id"]
 	if newitem.ID == "" {
 		log.Printf("Empty ID: %v", vars)
-		rw.WriteHeader(400)
-		rw.Write([]byte("missing id id"))
+		errorResponse(rw, "empty ID", 400)
 		tx.Rollback()
 		return
 	}
@@ -173,8 +172,7 @@ func UpdateHandler(rw http.ResponseWriter, req *http.Request) {
 		row := tx.QueryRow("SELECT * FROM items WHERE id = ? LIMIT 1", newitem.ID)
 		if err := row.Scan(&olditem.ID, &olditem.Description, &olditem.User); err != nil {
 			log.Printf("Error querying item: %v", err)
-			rw.WriteHeader(500)
-			rw.Write([]byte("oops"))
+			errorResponse(rw, "internal error", 500)
 			tx.Rollback()
 			return
 		}
@@ -187,16 +185,14 @@ func UpdateHandler(rw http.ResponseWriter, req *http.Request) {
 	)
 	if err != nil {
 		log.Printf("Error updating item: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		tx.Rollback()
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Printf("Error committing item: %v", err)
-		rw.WriteHeader(500)
-		rw.Write([]byte("oops"))
+		errorResponse(rw, "internal error", 500)
 		tx.Rollback()
 		return
 	}
