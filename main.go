@@ -237,9 +237,10 @@ func main() {
 	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 	bind := flag.String("bind", "localhost:8000", "host:port to listen on")
 	dbFile := flag.String("db", "signup.sqlite3", "filename for db")
+	staticPath := flag.String("path", "www", "path to static www assests")
 	flag.Parse()
 
-	router, err := setup(*dbFile)
+	router, err := setup(*staticPath, *dbFile)
 	if err != nil {
 		log.Fatalf("Error starting up: %v", err)
 	}
@@ -254,7 +255,7 @@ func initDB() {
 	createTable("items", "CREATE TABLE %s ( id TEXT PRIMARY KEY, description TEXT NOT NULL DEFAULT '', user TEXT NOT NULL DEFAULT '' )")
 }
 
-func setup(dbFile string) (*mux.Router, error) {
+func setup(staticPath, dbFile string) (*mux.Router, error) {
 	var err error
 	if DB, err = sql.Open("sqlite3", dbFile); err != nil {
 		return nil, fmt.Errorf("Error opening database: %v", err)
@@ -266,6 +267,7 @@ func setup(dbFile string) (*mux.Router, error) {
 	r.HandleFunc("/api/list", GetHandler).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/list", AddHandler).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/list/{id}", UpdateHandler).Methods("POST", "OPTIONS")
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(staticPath)))
 
 	return r, nil
 }
